@@ -1,0 +1,116 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{url}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Machine Learning--Based Nowcasting of Extreme Rainfall over Aceh Using ERA5 Reanalysis}
+
+\author{
+\IEEEauthorblockN{Muhammad Raza Adzani}
+\IEEEauthorblockA{
+\textit{Department of Informatics} \\
+\textit{Syiah Kuala University} \\
+Banda Aceh, Indonesia \\
+email: raza.a22@mhs.usk.ac.id
+}
+\and
+\IEEEauthorblockN{Ahmad Siddiq}
+\IEEEauthorblockA{
+\textit{Department of Informatics} \\
+\textit{Syiah Kuala University} \\
+Banda Aceh, Indonesia \\
+email: m.siddiq2@mhs.usk.ac.id
+}
+
+}
+
+\maketitle
+
+\begin{abstract}
+Extreme rainfall is a major trigger of floods and landslides in many regions of Indonesia, including Aceh Province, where short-lived but intense precipitation events can rapidly escalate into disasters. Existing early-warning systems often rely on numerical weather prediction models that may exhibit limited skill for very short lead times at local scales. This study proposes a machine learning--based framework for three-hour-ahead extreme rainfall nowcasting over Aceh using ERA5 single-level reanalysis data. The problem is formulated as a binary classification task on a 0.25$^\circ$ $\times$ 0.25$^\circ$ latitude--longitude grid, where extreme events are defined as three-hour accumulated precipitation exceeding a high percentile threshold. A set of meteorological and temporal predictors, including near-surface atmospheric variables and short-term precipitation history, is planned to be used as model input. Logistic regression and random forest classifiers are proposed and evaluated using a chronological data-splitting strategy to emulate an operational setting. This study aims to assess the feasibility of reanalysis-driven machine learning approaches for short-range extreme rainfall early warning in data-scarce regions such as Aceh.
+\end{abstract}
+
+\begin{IEEEkeywords}
+extreme rainfall, nowcasting, machine learning, random forest, ERA5 reanalysis, Aceh
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Extreme rainfall is one of the primary drivers of floods and landslides across Indonesia, and its impacts are particularly severe in regions with complex topography and limited monitoring infrastructure. Aceh Province, located at the northern tip of Sumatra, frequently experiences intense convective rainfall associated with monsoonal circulation and local atmospheric instability. These short-lived but high-intensity events often result in flash floods that cause infrastructure damage and threaten human safety.
+
+Operational rainfall early-warning systems typically depend on numerical weather prediction (NWP) models, rain-gauge observations, and, where available, weather radar. However, in many parts of Indonesia, observational networks remain sparse and radar coverage is limited. Moreover, NWP models may exhibit biases and reduced skill when predicting extreme precipitation at short lead times and fine spatial scales. These limitations motivate the exploration of complementary, data-driven approaches that can exploit existing atmospheric datasets.
+
+Reanalysis products such as ERA5 provide physically consistent atmospheric variables at high temporal resolution over long periods. Although reanalysis data are not forecasts, they can be leveraged to learn empirical relationships between atmospheric conditions and subsequent extreme rainfall. Recent advances in machine learning have demonstrated strong potential for extracting such relationships from large environmental datasets. This study therefore proposes a machine learning--based framework for three-hour-ahead extreme rainfall nowcasting over Aceh using ERA5 reanalysis variables.
+
+\section{Related Work}
+
+Machine learning techniques have been increasingly applied to precipitation forecasting and extreme rainfall analysis as complements to traditional statistical and numerical approaches. Random forest classifiers have been shown to improve exceedance forecasts for heavy precipitation and to outperform linear models such as logistic regression in distinguishing extreme from non-extreme events~\cite{b1,b8}. These tree-based methods are particularly effective at capturing non-linear interactions among meteorological predictors.
+
+Several studies have focused on correcting or post-processing reanalysis precipitation using machine learning, demonstrating improved hydrological simulations and enhanced representation of extreme rainfall~\cite{b2}. Other work has applied machine learning models to rainfall occurrence and intensity prediction at various temporal scales, highlighting the potential of relatively simple models to capture complex atmospheric relationships~\cite{b3,b4,b10}.
+
+Deep learning approaches, including convolutional neural networks and recurrent architectures, have also been explored for precipitation nowcasting using radar and satellite data~\cite{b5,b6,b7,b9}. While these methods often achieve high skill, they typically require dense observational coverage and large volumes of high-resolution data, which may not be available in many tropical regions. In contrast, fewer studies have explicitly investigated short-lead extreme rainfall classification using reanalysis variables alone, particularly for regions such as Aceh. This motivates the proposed reanalysis-driven machine learning framework.
+
+\section{Methodology}
+
+\subsection{Data Source and Study Area}
+
+The proposed study will use ERA5 single-level reanalysis data obtained from the Copernicus Climate Data Store. Hourly data covering the period 2020--2024 will be extracted for a domain surrounding Banda Aceh, Indonesia (5.0$^\circ$--6.0$^\circ$N, 95.0$^\circ$--96.0$^\circ$E). The spatial resolution of 0.25$^\circ$ $\times$ 0.25$^\circ$ corresponds to a $5 \times 5$ grid that includes both coastal and inland areas exposed to intense rainfall.
+
+\subsection{Problem Formulation}
+
+The prediction task is formulated as a binary classification problem at the grid-cell level. For each grid point and time step, the objective is to predict whether the accumulated precipitation over the subsequent three hours will exceed an extreme threshold. Extreme rainfall events are planned to be defined using a high percentile (e.g., the 95th percentile) of the three-hour accumulated precipitation distribution computed over the study period.
+
+\subsection{Feature Engineering}
+
+Input features are planned to include near-surface meteorological variables, short-term precipitation history, and temporal encodings. Lagged precipitation features and rolling means will be used to capture rainfall persistence, while diurnal and seasonal cycles will be represented using sine and cosine transformations of time variables.
+
+\subsection{Proposed Models and Evaluation}
+
+Two machine learning models are proposed for evaluation: logistic regression as a baseline and random forest as a non-linear ensemble model. A chronological data-splitting strategy will be used to emulate an operational nowcasting scenario and avoid temporal leakage. Model performance will be assessed using classification metrics such as accuracy, precision, recall, and the area under the receiver operating characteristic curve, with particular emphasis on recall for extreme events.
+
+\begin{thebibliography}{00}
+
+\bibitem{b1}
+G.~R. Herman and R.~S. Schumacher, ``Money Doesn't Grow on Trees, but Forecasts Do: Forecasting Extreme Precipitation with Random Forests,'' \emph{Monthly Weather Review}, vol.~146, no.~5, pp.~1571--1600, 2018.
+
+\bibitem{b2}
+H.~Sun \emph{et al.}, ``Corrected ERA5 precipitation by machine learning significantly improved flow simulations,'' \emph{Journal of Hydrometeorology}, vol.~23, no.~10, pp.~1663--1679, 2022.
+
+\bibitem{b3}
+B.~Yang \emph{et al.}, ``A method for monthly extreme precipitation forecasting,'' \emph{Water}, vol.~15, no.~8, 2023.
+
+\bibitem{b4}
+S.~Chkeir \emph{et al.}, ``Nowcasting extreme rain with machine learning techniques,'' \emph{Atmospheric Research}, vol.~282, 2023.
+
+\bibitem{b5}
+S.~Ravuri \emph{et al.}, ``Skillful precipitation nowcasting using deep generative models,'' \emph{Nature}, vol.~597, pp.~672--677, 2021.
+
+\bibitem{b6}
+G.~Ayzel \emph{et al.}, ``RainNet: A CNN for radar-based precipitation nowcasting,'' \emph{Geoscientific Model Development}, vol.~13, pp.~2631--2644, 2020.
+
+\bibitem{b7}
+F.~Gamboa-Villafruela, ``Immediate precipitation forecasting using deep learning,'' \emph{Proceedings}, vol.~8, no.~1, 2021.
+
+\bibitem{b8}
+D.~Wolfensberger and A.~Feinberg, ``RainForest: A random forest algorithm for precipitation estimation,'' \emph{Atmospheric Measurement Techniques}, vol.~14, pp.~3169--3193, 2021.
+
+\bibitem{b9}
+X.~Shi \emph{et al.}, ``Convolutional LSTM network for precipitation nowcasting,'' \emph{NeurIPS}, 2015.
+
+\bibitem{b10}
+X.~Shi, ``Smart dynamical downscaling of extreme precipitation,'' \emph{Geophysical Research Letters}, vol.~47, 2020.
+
+\end{thebibliography}
+
+\end{document}
