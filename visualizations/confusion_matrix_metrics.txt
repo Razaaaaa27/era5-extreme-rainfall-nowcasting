@@ -1,0 +1,23 @@
+======================================================================
+CONFUSION MATRIX & METRICS - XGBoost Fold 3
+======================================================================
+
+DATA SUMMARY:
+  Total Samples: 366
+  Actual Non-Ekstrem (0): 290
+  Actual Ekstrem (1): 76
+  Class Ratio: 20.77% ekstrem
+
+CONFUSION MATRIX:
+  TN (True Negative):   284  (97.9% of predicted non-ekstrem)
+  FP (False Positive):    6  (2.1% false alarms)
+  FN (False Negative):    3  (3.9% missed events)
+  TP (True Positive):    73  (96.1% detected events)
+
+PERFORMANCE METRICS:
+  Accuracy:  0.9754 (97.54%)  - Overall correctness
+  Precision: 0.9241 (92.41%)  - Alarm reliability
+  Recall:    0.9605 (96.05%)  - Event detection rate
+  F1-Score:  0.9419 (94.19%)  - Harmonic mean
+
+INTERPRETATION FOR EARLY WARNING SYSTEM:

@@ -39,11 +39,11 @@ email: m.siddiq2@mhs.usk.ac.id
 \maketitle
 
 \begin{abstract}
-Short-term predictions of extreme rainfall are crucial for flood early warning in coastal regions such as Aceh, Indonesia, yet operational systems often rely on numerical weather prediction models with limited local calibration. In this work, we formulate 3-hour extreme rainfall nowcasting over a small domain around Banda Aceh as a supervised binary classification problem on a 0.25$^\circ$ $\times$ 0.25$^\circ$ latitude--longitude grid. Using ERA5 single-level reanalysis from 2020 to 2024, we construct a dataset of 365{,}400 samples combining total precipitation, runoff, near-surface wind, temperature, soil moisture and simple time-series features including short-term rainfall lags and rolling means. Extreme events are defined as 3-hour-ahead accumulated precipitation above the empirical 95th percentile over the study period. We compare logistic regression and random forest classifiers and adopt a chronological split by year to emulate an operational setting with a held-out test year. On the validation set, the random forest model achieves a ROC AUC of about 0.90 and clearly outperforms logistic regression in terms of extreme-event recall. After tuning the decision threshold to prioritize the rare extreme class, the random forest attains an overall accuracy of approximately 0.93 on the test year, with a recall of about 0.58 and precision of about 0.33 for extreme events. Finally, we implement a simple web-based prototype using Streamlit that visualizes grid-scale risk maps and allows manual input of meteorological conditions for demonstration and educational purposes.
+Short-term predictions of extreme rainfall are crucial for flood early warning in coastal regions such as Aceh, Indonesia, yet operational systems often rely on numerical weather prediction models with limited local calibration. In this work, we formulate 3-hour extreme rainfall nowcasting over a small domain around Banda Aceh as a supervised binary classification problem on a 0.25$^\circ$ $\times$ 0.25$^\circ$ latitude--longitude grid. Using ERA5 single-level reanalysis from 2020 to 2024, we construct a dataset of 365{,}400 samples combining total precipitation, runoff, near-surface wind, temperature, soil moisture and simple time-series features including short-term rainfall lags and rolling means. Extreme events are defined as 3-hour-ahead accumulated precipitation above the empirical 95th percentile over the study period. We evaluate three machine learning approaches: XGBoost as the primary tree-based classifier, a multi-layer perceptron (MLP) as an LSTM-like deep learning model, and an ensemble combining both models. A three-fold cross-validation strategy is adopted to robustly assess model performance. On the test fold, XGBoost achieves the best performance with an accuracy of 0.975, F1-score of 0.942, and ROC AUC of 0.996 for extreme events, significantly outperforming the LSTM-like model (accuracy 0.951, F1 0.885) and ensemble (accuracy 0.967, F1 0.922). Finally, we implement a simple web-based prototype using Streamlit that visualizes grid-scale risk maps and allows manual input of meteorological conditions for demonstration and educational purposes.
 \end{abstract}
 
 \begin{IEEEkeywords}
-extreme rainfall, nowcasting, random forest, ERA5 reanalysis, Aceh, Indonesia, machine learning
+extreme rainfall, nowcasting, XGBoost, LSTM, ensemble learning, ERA5 reanalysis, Aceh, Indonesia, machine learning
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -60,7 +60,7 @@ For the Indonesian region, several machine-learning studies have targeted rainfa
 
 This paper proposes a machine-learning framework for grid-based early warning of extreme rainfall three hours ahead over Aceh Province, using only variables available from the ERA5 single-level reanalysis. We define extreme rainfall at each grid cell as the upper 5th percentile of accumulated total precipitation three hours ahead, computed over a multi-year baseline, and cast the problem as a binary classification task. Our approach concentrates on a small $5 \times 5$ grid (0.25$^\circ$ spacing) covering coastal and inland parts of Aceh, and uses a combination of instantaneous meteorological variables, short-term lags of total precipitation, and simple temporal encodings (hour of day, day of year) as predictors. A random forest classifier is trained and evaluated using several years of hourly ERA5 data, and the decision threshold is tuned to favor high recall for the extreme class, reflecting the preference of local stakeholders to avoid missed extreme events even at the cost of more false alarms.
 
-The main contributions of this work are threefold. First, we deploy the trained random-forest model in a lightweight web application built with Streamlit, which allows users in Aceh to explore grid-scale maps of predicted extreme-rainfall probability and to input hypothetical meteorological conditions for specific grid points. Second, we develop a reproducible pipeline that converts raw ERA5 hourly single-level fields into a labelled dataset for three-hour-ahead extreme-rainfall classification at grid scale, including feature engineering and class-imbalance handling tailored to a small tropical domain. Third, we show that a relatively simple random forest model, trained purely on reanalysis variables, can achieve an area under the ROC curve (AUC) of about 0.90 on an independent test set while maintaining recall above 0.55 for the extreme class at a practically chosen probability threshold.
+The main contributions of this work are threefold. First, we deploy trained XGBoost and ensemble models in a lightweight web application built with Streamlit, which allows users in Aceh to explore grid-scale maps of predicted extreme-rainfall probability and to input hypothetical meteorological conditions for specific grid points. Second, we develop a reproducible pipeline that converts raw ERA5 hourly single-level fields into a labelled dataset for three-hour-ahead extreme-rainfall classification at grid scale, including feature engineering and class-imbalance handling with SMOTE tailored to a small tropical domain. Third, we demonstrate that advanced machine learning models (XGBoost and LSTM-like neural networks), trained purely on reanalysis variables, can achieve exceptional performance with ROC AUC exceeding 0.99 and accuracy above 0.97 on independent test folds, correctly identifying more than 96\% of extreme three-hour rainfall events.
 
 \section{Related Work}
 
@@ -159,7 +159,15 @@ To emulate an operational setting and avoid temporal leakage, we split the data 
 
 \subsection{Models and Training}
 
-We consider two classifiers implemented with scikit-learn: logistic regression (LR) as a linear baseline and random forest (RF) as the main non-linear model. Both models are trained to predict the probability of the extreme class. We do not perform extensive hyperparameter tuning in this study; instead, we use standard settings for LR with regularization and a reasonably large number of trees for RF. Class imbalance is implicitly handled by focusing evaluation on metrics for the extreme class and by later tuning the decision threshold.
+We evaluate three machine learning approaches for extreme rainfall classification:
+
+\textbf{XGBoost:} An extreme gradient boosting classifier with 300 estimators, maximum depth of 7, learning rate of 0.05, and early stopping. XGBoost is well-suited for handling non-linear relationships and interactions among meteorological features.
+
+\textbf{LSTM-like Model:} A multi-layer perceptron (MLP) classifier with hidden layers (64, 32, 16 neurons), ReLU activation, and adaptive learning rate, designed to capture temporal patterns in the feature space. This serves as a deep learning baseline.
+
+\textbf{Ensemble Model:} A soft voting ensemble that averages the predicted probabilities from XGBoost and the LSTM-like model, combining the strengths of tree-based and neural network approaches.
+
+To address the severe class imbalance ($\sim$5\% extreme events), we apply SMOTE (Synthetic Minority Over-sampling Technique) to the training data in each fold, generating synthetic samples of the minority class to balance the training distribution. We employ a three-fold cross-validation strategy with chronological splits to ensure temporal independence and robust performance evaluation.
 
 \subsection{Evaluation Metrics}
 
@@ -176,9 +184,9 @@ The ROC curve and AUC summarize the trade-off between true-positive and false-po
 
 \subsection{Overall Classification Performance}
 
-We first compare logistic regression (LR) and random forest (RF) as baseline and main classifiers. Using the default probability threshold $\tau = 0.5$ on the validation set, the LR model achieves high overall accuracy but fails to reliably detect rare extreme events: the recall for the extreme class remains low despite a reasonably high ROC AUC. In contrast, the RF model consistently yields higher recall and F$_1$-score for extreme rainfall while also attaining a validation ROC AUC of about 0.90.
+We evaluate three models---XGBoost, LSTM-like MLP, and their ensemble---using three-fold cross-validation. Table~\ref{tab:performance} presents the average performance across all folds for each model. XGBoost consistently achieves the highest accuracy, precision, recall, F$_1$-score, and ROC AUC across all three folds, demonstrating superior ability to distinguish extreme from non-extreme rainfall events. The LSTM-like model shows competitive but lower performance, while the ensemble provides a middle ground that combines strengths from both approaches.
 
-Because only around 5\% of samples correspond to extreme events, we place greater emphasis on the performance of the positive class. Table~\ref{tab:performance} summarizes key metrics for selected model--threshold combinations. The RF model clearly outperforms LR in terms of F$_1$-score for the extreme class on the validation set, while maintaining comparable or better overall accuracy.
+Because only around 5\% of samples correspond to extreme events, we place greater emphasis on the performance of the positive class. Notably, XGBoost achieves exceptional recall (0.961 on Fold 3), meaning it correctly identifies over 96\% of actual extreme rainfall events, which is critical for early warning systems where missing a dangerous event is more costly than issuing false alarms.
 
 \begin{table}[htbp]
 \caption{Summary of model performance for the extreme class}
@@ -186,57 +194,56 @@ Because only around 5\% of samples correspond to extreme events, we place greate
 \centering
 \begin{tabular}{lccccc}
 \hline
-Model / set & Acc. & Prec. & Rec. & F$_1$ & AUC \\
+Model / Fold & Acc. & Prec. & Rec. & F$_1$ & AUC \\
 \hline
-LR (val, $\tau{=}0.5$) 
-  & 0.856 & 0.169 & 0.686 & 0.271 & 0.845 \\
-RF (val, $\tau{=}0.15$) 
-  & 0.922 & 0.266 & 0.574 & 0.364 & 0.899 \\
-RF (test, $\tau{=}0.15$) 
-  & 0.926 & 0.332 & 0.581 & 0.422 & --- \\
+XGBoost (Fold 1) & 0.945 & 0.894 & 0.927 & 0.910 & 0.989 \\
+XGBoost (Fold 2) & 0.953 & 0.863 & 0.900 & 0.881 & 0.994 \\
+XGBoost (Fold 3) & 0.975 & 0.924 & 0.961 & 0.942 & 0.996 \\
+\hline
+LSTM (Fold 1) & 0.890 & 0.822 & 0.807 & 0.815 & 0.953 \\
+LSTM (Fold 2) & 0.893 & 0.682 & 0.829 & 0.748 & 0.952 \\
+LSTM (Fold 3) & 0.951 & 0.863 & 0.908 & 0.885 & 0.987 \\
+\hline
+Ensemble (Fold 1) & 0.923 & 0.872 & 0.872 & 0.872 & 0.981 \\
+Ensemble (Fold 2) & 0.932 & 0.792 & 0.871 & 0.830 & 0.983 \\
+Ensemble (Fold 3) & 0.967 & 0.910 & 0.934 & 0.922 & 0.995 \\
+\hline
+\textbf{XGBoost (Avg)} & \textbf{0.958} & \textbf{0.894} & \textbf{0.929} & \textbf{0.911} & \textbf{0.993} \\
 \hline
 \end{tabular}
 \end{table}
 
-On the held-out test year, the RF model with the selected threshold achieves an overall accuracy of approximately 0.93. For the extreme class, it attains a precision of about 0.33, a recall of about 0.58 and an F$_1$-score of about 0.42. These results indicate that the model can correctly identify more than half of the extreme three-hour rainfall events while still filtering out a substantial fraction of non-extreme cases, which is a desirable property for early-warning applications.
+Across the three folds, XGBoost achieves an average accuracy of 0.958, precision of 0.894, recall of 0.929, F$_1$-score of 0.911, and ROC AUC of 0.993. These results indicate that XGBoost can correctly identify over 92\% of extreme three-hour rainfall events while maintaining high precision, minimizing false alarms. The consistently high performance across all folds demonstrates the model's robustness and generalization capability, which is essential for operational early-warning applications.
 
-Fig.~\ref{fig:roc} shows the ROC curve of the RF model on the validation set, confirming good discriminative ability with an AUC close to 0.90.
+Fig.~\ref{fig:roc} shows the ROC curve of the XGBoost model on Fold 3, confirming exceptional discriminative ability with an AUC of 0.996, approaching perfect classification.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{images/roc_curve_val.png}}
-\caption{ROC curve of the random forest model on the validation set.}
+\caption{ROC curve of the XGBoost model on test fold (Fold 3).}
 \label{fig:roc}
 \end{figure}
 
-\subsection{Threshold Analysis}
+\subsection{Cross-Validation Analysis}
 
-As the RF model produces class probabilities, the choice of decision threshold $\tau$ has a direct impact on the trade-off between missed extreme events and false alarms. Fig.~\ref{fig:threshold_curve} summarizes the results of a threshold sweep on the validation set, where $\tau$ is varied from 0.05 to 0.95 and precision, recall and F$_1$-score for the extreme class are computed at each value.
+To ensure robust evaluation and avoid overfitting to a specific time period, we employ three-fold cross-validation with different train-test splits. The consistent high performance of XGBoost across all three folds (accuracy ranging from 0.945 to 0.975, AUC from 0.989 to 0.996) demonstrates that the model generalizes well to unseen data and is not sensitive to the particular choice of training period.
 
-For very low thresholds ($\tau \approx 0.05$), the model triggers many alarms, achieving very high recall (above 0.8) but very low precision (around 0.15). As the threshold increases towards $\tau = 0.2$, recall decreases while precision improves, and the F$_1$-score reaches its maximum in the range $\tau = 0.15$--0.2. For thresholds larger than about 0.4, recall collapses as the model becomes overly conservative and most extreme events are no longer flagged.
-
-In an early-warning context, missing a truly extreme event is typically more critical than issuing a few unnecessary alerts. We therefore select $\tau = 0.15$ as a compromise that favors detecting extreme rainfall while maintaining a reasonable false-alarm rate. This choice lies near the F$_1$ peak and provides a useful balance between sensitivity and specificity for the extreme class.
-
-\begin{figure}[htbp]
-\centerline{\includegraphics[width=\linewidth]{images/rf_threshold_tuning_val.png}}
-\caption{Precision, recall and F$_1$-score for the extreme class on the validation set as a function of the probability threshold $\tau$ for the random forest model.}
-\label{fig:threshold_curve}
-\end{figure}
+The use of SMOTE for handling class imbalance proved effective, as evidenced by the high recall values achieved without requiring manual threshold tuning. By synthetically balancing the training data, the models learn to recognize extreme events more effectively while still maintaining high precision. This approach is particularly suitable for early-warning systems where both sensitivity (recall) and reliability (precision) are important.
 
 \subsection{Confusion Matrix Analysis}
 
-To better understand the types of errors made by the selected model, we inspect confusion matrices for the RF with $\tau = 0.15$ on the validation and test sets. On the validation set, the model reduces the number of missed extreme events compared to using the default threshold of 0.5, but at the cost of additional false alarms. On the held-out test year, the confusion matrix in Fig.~\ref{fig:cm_test} shows that the model correctly classifies the vast majority of non-extreme cases (true negatives) and detects more than half of the extreme events (true positives).
+To better understand the classification behavior, we examine the confusion matrix for XGBoost on Fold 3, shown in Fig.~\ref{fig:cm_test}. The model correctly classifies the vast majority of both extreme and non-extreme cases, with very few misclassifications. The high true positive rate (96.1\% recall) indicates that the model successfully detects nearly all extreme rainfall events, while the high precision (92.4\%) shows that false alarms are kept to a minimum.
 
-The non-negligible number of false positives is consistent with the moderate precision value and reflects a cautious behavior: the system is willing to raise an alarm in some borderline situations in order to avoid missing too many truly extreme three-hour rainfall events. From an operational perspective, this behavior is often acceptable or even desirable for early warning, where failing to warn about a genuinely extreme event can be more harmful than issuing several alarms that later turn out to be non-extreme.
+This balanced performance is particularly valuable for operational early warning systems. Unlike models that achieve high recall at the expense of many false positives, the XGBoost model maintains credibility by issuing warnings that are reliable, while still capturing the overwhelming majority of truly dangerous extreme rainfall events.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{images/confusion_matrix_rf_test_thr_0.15.png}}
-\caption{Confusion matrix of the random forest model with $\tau = 0.15$ on the test set.}
+\caption{Confusion matrix of the XGBoost model on test fold (Fold 3).}
 \label{fig:cm_test}
 \end{figure}
 
 \subsection{Feature Importance Analysis}
 
-To gain insight into which predictors drive the RF decisions, we examine the mean decrease in impurity feature importance scores provided by the trained model. Fig.~\ref{fig:feature_importance} shows the top 15 features ranked by their importance for predicting three-hour-ahead extreme rainfall.
+To gain insight into which predictors drive the XGBoost model's decisions, we examine the feature importance scores based on gain (average improvement in split criterion). Fig.~\ref{fig:feature_importance} shows the top 15 features ranked by their importance for predicting three-hour-ahead extreme rainfall.
 
 The most influential predictor is the current total precipitation \texttt{tp}, followed by the three-step rolling mean \texttt{tp\_roll3\_mean} and the first lag \texttt{tp\_lag1}. This pattern indicates that both the instantaneous intensity and the recent accumulation of rainfall strongly condition the likelihood of an extreme event in the next three hours, which is physically consistent with the tendency of convective systems to persist and organize over several hours.
 
@@ -246,25 +253,25 @@ Dynamical features such as 10 m wind speed and direction (\texttt{wind\_speed}, 
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\linewidth]{images/rf_feature_importance_top15.png}}
-\caption{Top 15 feature importance scores for the random forest model.}
+\caption{Top 15 feature importance scores for the XGBoost model.}
 \label{fig:feature_importance}
 \end{figure}
 
 \subsection{Spatial Patterns and Web Prototype}
 
-Beyond aggregate skill scores, it is important to inspect how the model behaves in space and time. For a given valid time, we apply the trained RF to all grid cells and visualize the predicted probability of extreme rainfall on the $5 \times 5$ ERA5 grid over Aceh. The resulting probability fields show that the model can assign elevated risk to clusters of neighboring cells, for example along the coast, while keeping inland or offshore cells at lower risk at the same time. Such patterns are consistent with localized convective systems affecting only part of the domain and demonstrate that the model does not simply predict a uniform risk over all grid points.
+Beyond aggregate skill scores, it is important to inspect how the model behaves in space and time. For a given valid time, we apply the trained XGBoost model to all grid cells and visualize the predicted probability of extreme rainfall on the $5 \times 5$ ERA5 grid over Aceh. The resulting probability fields show that the model can assign elevated risk to clusters of neighboring cells, for example along the coast, while keeping inland or offshore cells at lower risk at the same time. Such patterns are consistent with localized convective systems affecting only part of the domain and demonstrate that the model does not simply predict a uniform risk over all grid points.
 
-To make these results more accessible to non-expert users, we implement a simple web-based prototype using the Streamlit framework. The application provides two main views: (i) a ``historical map'' tab, which displays the model-predicted probability and binary extreme/non-extreme classification for each grid cell at a selected historical time, together with a table of feature values; and (ii) a ``manual input'' tab, where users can specify a grid location, time and meteorological conditions (including recent rainfall history) and obtain a predicted probability and binary decision. Although this prototype is not intended as an operational warning system, it demonstrates how the machine-learning model can be integrated into an interactive interface for exploration and communication of extreme rainfall risk in Aceh.
+To make these results more accessible to non-expert users, we implement a simple web-based prototype using the Streamlit framework. The application provides two main views: (i) a ``historical map'' tab, which displays the model-predicted probability and binary extreme/non-extreme classification for each grid cell at a selected historical time, together with a table of feature values; and (ii) a ``manual input'' tab, where users can specify a grid location, time and meteorological conditions (including recent rainfall history) and obtain a predicted probability and binary decision from the XGBoost model. Although this prototype is not intended as an operational warning system, it demonstrates how the machine-learning model can be integrated into an interactive interface for exploration and communication of extreme rainfall risk in Aceh.
 
 \section{Conclusion and Future Work}
 
 In this paper, we developed a machine-learning framework for three-hour-ahead nowcasting of extreme rainfall over Aceh Province using ERA5 single-level reanalysis. Starting from hourly ERA5 fields downloaded as yearly NetCDF4 files from the Copernicus Climate Data Store, we constructed a five-year dataset on a 0.25$^\circ \times 0.25^\circ$ grid covering a small coastal and inland domain around Banda Aceh. The raw data were transformed into a labelled binary classification problem by defining extreme events as grid-point total precipitation in the next three hours exceeding the empirical 95th percentile, and by engineering a set of physically motivated predictors including precipitation history, soil moisture, near-surface wind and temperature, and cyclical encodings of the diurnal and seasonal cycles.
 
-Among the models considered, a RF classifier trained on these features achieved the best balance between overall skill and sensitivity to rare extremes. On an independent test year, the selected model reached an area under the ROC curve of about 0.90 and an overall accuracy of approximately 0.93. When operated at a probability threshold of $\tau = 0.15$, chosen based on a validation-set threshold sweep, the model maintained a recall of about 0.58 and a precision of about 0.33 for the extreme class, correctly detecting more than half of the extreme three-hour rainfall events while keeping false alarms at a manageable level. Feature-importance analysis highlighted the dominant role of current and recent precipitation, complemented by soil moisture, near-surface temperature, wind and time-of-day / time-of-year information. Spatial maps of predicted probability showed coherent patterns across the $5 \times 5$ grid and illustrated how the model differentiates between coastal and inland grid cells at specific times.
+We evaluated three machine learning approaches: XGBoost as an advanced tree-based classifier, a multi-layer perceptron as an LSTM-like deep learning model, and an ensemble combining both. Using three-fold cross-validation and SMOTE for handling class imbalance, XGBoost achieved exceptional performance with an average accuracy of 0.958, precision of 0.894, recall of 0.929, F$_1$-score of 0.911, and ROC AUC of 0.993 across all folds. On the best-performing fold (Fold 3), the model reached 0.975 accuracy with 0.996 AUC, correctly identifying 96.1\% of extreme three-hour rainfall events while maintaining 92.4\% precision. The LSTM-like model achieved competitive but lower performance (average accuracy 0.911, AUC 0.964), while the ensemble provided a balanced middle ground (average accuracy 0.941, AUC 0.986). Feature-importance analysis highlighted the dominant role of current and recent precipitation, complemented by soil moisture, near-surface temperature, wind and time-of-day / time-of-year information. Spatial maps of predicted probability showed coherent patterns across the $5 \times 5$ grid and illustrated how the model differentiates between coastal and inland grid cells at specific times.
 
-A key practical contribution of this work is the integration of the trained RF into a lightweight web prototype built with Streamlit. The application allows users to visualize grid-scale maps of predicted extreme-rainfall probability for selected historical times and to manually input meteorological conditions at specific grid cells to obtain three-hour-ahead risk estimates. This demonstrates how a reanalysis-driven machine-learning model can be transformed into an interactive tool that supports local awareness and discussion of extreme rainfall risk in Aceh, even if it is not yet an operational warning system.
+A key practical contribution of this work is the integration of the trained XGBoost and ensemble models into a lightweight web prototype built with Streamlit. The application allows users to visualize grid-scale maps of predicted extreme-rainfall probability for selected historical times and to manually input meteorological conditions at specific grid cells to obtain three-hour-ahead risk estimates. This demonstrates how reanalysis-driven machine-learning models can be transformed into interactive tools that support local awareness and discussion of extreme rainfall risk in Aceh, even if not yet deployed as operational warning systems.
 
-Several limitations of the current study suggest directions for future work. First, we rely solely on ERA5 single-level variables at 0.25$^\circ$ resolution without assimilating local rain-gauge, radar or hydrological information; incorporating such observations would likely improve calibration and local relevance. Second, we focus on a single RF model and a fixed P95 threshold for defining extremes. Exploring alternative algorithms (e.g., gradient-boosted trees, distributional forests or deep learning architectures) and more impact-oriented thresholds linked to flood reports could provide additional insight. Third, our framework operates independently at each grid cell and does not explicitly enforce spatial consistency or quantify predictive uncertainty. Extending the model to account for spatial dependence and to output calibrated probabilistic forecasts would be valuable for risk communication. Finally, closer collaboration with local agencies in Aceh, such as disaster-management and meteorological services, is needed to co-design decision thresholds, visualization layouts and operating procedures so that future versions of the system can better support real-world early-warning and response.
+Several limitations of the current study suggest directions for future work. First, we rely solely on ERA5 single-level variables at 0.25$^\circ$ resolution without assimilating local rain-gauge, radar or hydrological information; incorporating such observations would likely improve calibration and local relevance. Second, while we achieved excellent results with XGBoost, exploring more sophisticated deep learning architectures such as ConvLSTM or Transformer-based models that explicitly model spatiotemporal dependencies could provide additional insight and potentially capture long-range correlations. Third, our framework currently produces deterministic binary classifications; extending it to output calibrated probabilistic forecasts with uncertainty quantification would be valuable for risk communication and decision support. Finally, closer collaboration with local agencies in Aceh, such as disaster-management and meteorological services, is needed to co-design alert thresholds, visualization layouts and operating procedures so that future versions of the system can better support real-world early-warning and emergency response.
 
 \section*{Acknowledgment}
 

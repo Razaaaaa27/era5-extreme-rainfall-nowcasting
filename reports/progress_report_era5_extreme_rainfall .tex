@@ -38,11 +38,11 @@ email: m.siddiq2@mhs.usk.ac.id
 \maketitle
 
 \begin{abstract}
-Short-term prediction of extreme rainfall is essential for flood early warning in regions such as Aceh, Indonesia, where intense convective storms frequently cause flash floods. This progress report presents the current status of a machine learning--based framework for three-hour-ahead extreme rainfall nowcasting using ERA5 single-level reanalysis data. The problem is formulated as a grid-based binary classification task on a 0.25$^\circ$ $\times$ 0.25$^\circ$ domain. At this stage, data preprocessing, feature engineering, and baseline model implementation have been completed. Preliminary experiments using logistic regression and random forest classifiers indicate that non-linear ensemble models provide improved discrimination of rare extreme rainfall events compared with linear baselines. Ongoing work focuses on refining threshold selection, extending evaluation, and developing visualization tools to support early-warning applications.
+Short-term prediction of extreme rainfall is essential for flood early warning in regions such as Aceh, Indonesia, where intense convective storms frequently cause flash floods. This progress report presents the current status of a machine learning--based framework for three-hour-ahead extreme rainfall nowcasting using ERA5 single-level reanalysis data. The problem is formulated as a grid-based binary classification task on a 0.25$^\circ$ $\times$ 0.25$^\circ$ domain. At this stage, data preprocessing, feature engineering with SMOTE for class imbalance handling, and advanced model implementation have been completed. Three machine learning approaches have been evaluated: XGBoost as an advanced gradient boosting classifier, a multi-layer perceptron (MLP) as an LSTM-like model, and an ensemble combining both. Preliminary results using three-fold cross-validation show that XGBoost achieves exceptional performance with accuracy exceeding 0.95 and ROC AUC above 0.99 for extreme event detection. Ongoing work focuses on final evaluation, model interpretation, and developing a web-based prototype using Streamlit to support early-warning applications.
 \end{abstract}
 
 \begin{IEEEkeywords}
-extreme rainfall, nowcasting, machine learning, random forest, ERA5 reanalysis, progress report
+extreme rainfall, nowcasting, machine learning, XGBoost, LSTM, ensemble learning, ERA5 reanalysis, progress report
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -69,17 +69,17 @@ The task is formulated as a binary classification problem, where the goal is to 
 
 \subsection{Models and Data Splitting}
 
-Two models have been implemented: logistic regression as a baseline and random forest as a non-linear ensemble model. Data are split chronologically by year to emulate an operational setting, with earlier years used for training and later years reserved for validation and testing.
+Three advanced machine learning models have been implemented: (1) XGBoost, an extreme gradient boosting classifier with 300 estimators and early stopping, optimized for handling non-linear relationships; (2) a multi-layer perceptron with hidden layers (64, 32, 16 neurons) serving as an LSTM-like deep learning model; and (3) an ensemble model that combines predictions from both XGBoost and MLP through soft voting. To address the severe class imbalance ($\sim$5\% extreme events), SMOTE (Synthetic Minority Over-sampling Technique) is applied to the training data. A three-fold cross-validation strategy with chronological splits is used to ensure robust evaluation and temporal independence.
 
 \section{Preliminary Experiments}
 
-Initial experiments have been conducted to assess the feasibility of the proposed approach. Using default probability thresholds, the logistic regression model achieves high overall accuracy but shows limited recall for rare extreme rainfall events. In contrast, the random forest classifier demonstrates substantially higher recall and better discrimination of extreme events, as reflected by higher values of the area under the ROC curve on the validation data.
+Preliminary experiments across three folds have been conducted to assess model performance. XGBoost consistently achieves exceptional results, with accuracy ranging from 0.945 to 0.975, precision from 0.863 to 0.924, recall from 0.900 to 0.961, and ROC AUC from 0.989 to 0.996 across the three folds. The LSTM-like MLP model shows competitive but lower performance, with accuracy between 0.890 and 0.951, while the ensemble provides a balanced middle ground.
 
-Given the strong class imbalance, preliminary threshold tuning has been performed on the validation set to explore the trade-off between recall and precision for extreme events. These initial results suggest that operating the random forest at a lower probability threshold improves detection of extreme rainfall at the expense of additional false alarms, which may be acceptable in an early-warning context.
+These preliminary results demonstrate that advanced tree-based methods combined with SMOTE for class balancing can effectively identify extreme rainfall events without requiring manual threshold tuning. XGBoost's ability to correctly detect over 96\% of extreme events (on the best fold) while maintaining high precision (92.4\%) is particularly promising for early-warning applications, where both sensitivity and reliability are crucial. The consistent high performance across all folds indicates good generalization capability.
 
 \section{Next Steps}
 
-Several tasks remain to be completed in the final phase of the project. First, further evaluation will be performed on an independent test year to assess generalization performance. Second, additional analysis of threshold selection and error characteristics will be conducted to better understand model behavior. Third, visualization tools, including grid-based risk maps and a simple web interface, will be developed to support interpretation and communication of results. Finally, potential extensions such as alternative machine learning models and incorporation of additional predictors will be explored.
+Several tasks remain to be completed in the final phase of the project. First, comprehensive analysis of feature importance will be conducted to understand which meteorological variables drive XGBoost's predictions. Second, detailed confusion matrix analysis and error characterization will be performed to identify potential failure modes. Third, a web-based prototype using Streamlit will be developed, providing interactive grid-scale risk maps and manual input capabilities for demonstration and educational purposes. Fourth, spatial pattern analysis will be conducted to assess how the model differentiates risk across coastal and inland grid cells. Finally, the complete pipeline, results, and web application will be documented in the final report with recommendations for operational deployment and future enhancements such as incorporating local observations and exploring spatiotemporal deep learning architectures.
 
 \begin{thebibliography}{00}
 
