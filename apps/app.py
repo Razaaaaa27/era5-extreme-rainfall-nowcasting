@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 # Configure page
 st.set_page_config(
     page_title='Prediksi Hujan Ekstrem Aceh',
-    page_icon='🌧️',
+    page_icon=':cloud:',
     layout='wide',
     initial_sidebar_state='expanded'
 )
@@ -244,38 +244,50 @@ def make_prediction(basic_input, models, preprocessed_folds, fold=3, threshold=0
 st.markdown("""
 <style>
     .metric-box {
-        background-color: #f0f2f6;
-        padding: 20px;
-        border-radius: 10px;
+        background-color: #f5f5f4;
+        padding: 18px 20px;
+        border-radius: 4px;
         margin: 10px 0;
-        text-align: center;
+        text-align: left;
+        border: 1px solid #e2e2df;
     }
-    .warning-box {
-        background-color: #ff4444;
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin: 10px 0;
-        text-align: center;
-        font-size: 24px;
-        font-weight: bold;
+    .status-card {
+        padding: 18px 22px;
+        border-radius: 4px;
+        margin: 14px 0;
+        text-align: left;
+        border-left: 3px solid;
+        background-color: #fafaf9;
     }
-    .safe-box {
-        background-color: #44aa44;
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin: 10px 0;
-        text-align: center;
-        font-size: 24px;
-        font-weight: bold;
+    .status-card.alert {
+        border-left-color: #b3441e;
+    }
+    .status-card.normal {
+        border-left-color: #3f6b4a;
+    }
+    .status-card .status-label {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #6b6b68;
+        margin-bottom: 4px;
+    }
+    .status-card .status-value {
+        font-size: 22px;
+        font-weight: 600;
+        color: #1f1f1d;
+    }
+    .status-card .status-detail {
+        font-size: 14px;
+        color: #4a4a47;
+        margin-top: 4px;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # Header
-st.title('🌧️ Sistem Prediksi Hujan Ekstrem Aceh')
-st.markdown('**Powered by XGBoost + LSTM Ensemble | ERA5 Reanalysis Data**')
+st.title('Sistem Prediksi Hujan Ekstrem Aceh')
+st.caption('XGBoost + LSTM Ensemble — Data Reanalisis ERA5')
 
 # Load data
 try:
@@ -289,44 +301,45 @@ except Exception as e:
     st.stop()
 
 # Sidebar navigation
-st.sidebar.markdown('## 📊 Navigasi')
+st.sidebar.markdown('### Navigasi')
 page = st.sidebar.radio(
-    'Pilih halaman:',
-    ['🏠 Dashboard', '🎯 Prediksi Manual', '📈 Analisis Model', '📊 Feature Importance', '📋 Detail Prediksi']
+    'Pilih halaman',
+    ['Dashboard', 'Prediksi Manual', 'Analisis Model', 'Feature Importance', 'Detail Prediksi'],
+    label_visibility='collapsed'
 )
 
 # ============================================================================
 # PAGE 1: DASHBOARD
 # ============================================================================
-if page == '🏠 Dashboard':
+if page == 'Dashboard':
     st.markdown('---')
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.metric(
-            '✅ Akurasi',
+            'Akurasi',
             f'{best_fold["ensemble_metrics"]["accuracy"]:.2%}',
             'Ensemble Fold 3'
         )
 
     with col2:
         st.metric(
-            '🎯 Precision',
+            'Precision',
             f'{best_fold["ensemble_metrics"]["precision"]:.2%}',
             'Class Ekstrem'
         )
 
     with col3:
         st.metric(
-            '📊 Recall',
+            'Recall',
             f'{best_fold["ensemble_metrics"]["recall"]:.2%}',
             'Deteksi Event'
         )
 
     with col4:
         st.metric(
-            '⚡ F1-Score',
+            'F1-Score',
             f'{best_fold["ensemble_metrics"]["f1"]:.4f}',
             'Balanced Metric'
         )
@@ -334,7 +347,7 @@ if page == '🏠 Dashboard':
     st.markdown('---')
 
     # Performance comparison
-    st.subheader('📊 Performa Model (3-Fold Cross-Validation)')
+    st.subheader('Performa Model (3-Fold Cross-Validation)')
 
     # Calculate stats
     xgb_stats = calc_metrics_stats(model_results['xgb_scores'])
@@ -378,71 +391,74 @@ if page == '🏠 Dashboard':
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown('#### 📊 Confusion Matrix (Fold 3)')
+        st.markdown('**Confusion Matrix (Fold 3)**')
         from sklearn.metrics import confusion_matrix
 
         cm = confusion_matrix(predictions['Actual'], predictions['Ensemble'])
 
         fig, ax = plt.subplots(figsize=(6, 5))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='RdYlGn', cbar=False,
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False,
                    xticklabels=['Non-Ekstrem', 'Ekstrem'],
                    yticklabels=['Non-Ekstrem', 'Ekstrem'],
-                   ax=ax, annot_kws={'size': 16, 'weight': 'bold'})
-        ax.set_ylabel('Actual', fontsize=12)
-        ax.set_xlabel('Predicted', fontsize=12)
-        ax.set_title('Confusion Matrix (Ensemble)', fontsize=13, fontweight='bold')
+                   ax=ax, annot_kws={'size': 15, 'weight': 'medium'},
+                   linewidths=0.5, linecolor='#e2e2df')
+        ax.set_ylabel('Actual', fontsize=11)
+        ax.set_xlabel('Predicted', fontsize=11)
+        ax.set_title('Confusion Matrix — Ensemble', fontsize=12, fontweight='medium')
         st.pyplot(fig)
 
     with col2:
-        st.markdown('#### 📈 ROC Curve (Fold 3)')
+        st.markdown('**ROC Curve (Fold 3)**')
         from sklearn.metrics import roc_curve, auc
 
         fpr, tpr, _ = roc_curve(predictions['Actual'], predictions['Ensemble_Proba'])
         roc_auc = auc(fpr, tpr)
 
         fig, ax = plt.subplots(figsize=(6, 5))
-        ax.plot(fpr, tpr, color='darkorange', lw=2,
+        ax.plot(fpr, tpr, color='#1f4e5f', lw=2,
                label=f'Ensemble (AUC = {roc_auc:.3f})')
-        ax.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random')
+        ax.plot([0, 1], [0, 1], color='#9a9a96', lw=1.2, linestyle='--', label='Random')
         ax.set_xlim([0.0, 1.0])
         ax.set_ylim([0.0, 1.05])
         ax.set_xlabel('False Positive Rate', fontsize=11)
         ax.set_ylabel('True Positive Rate', fontsize=11)
-        ax.set_title('ROC Curve', fontsize=13, fontweight='bold')
-        ax.legend(loc="lower right")
-        ax.grid(True, alpha=0.3)
+        ax.set_title('ROC Curve', fontsize=12, fontweight='medium')
+        ax.legend(loc="lower right", frameon=False)
+        ax.grid(True, alpha=0.2)
+        for spine in ['top', 'right']:
+            ax.spines[spine].set_visible(False)
         st.pyplot(fig)
 
 # ============================================================================
 # PAGE 2: PREDIKSI MANUAL
 # ============================================================================
-elif page == '🎯 Prediksi Manual':
+elif page == 'Prediksi Manual':
     st.markdown('---')
-    st.subheader('🌧️ Input Data untuk Prediksi')
+    st.subheader('Input Data untuk Prediksi')
 
-    st.info('📌 Masukkan data meteorologi dasar. Sistem akan otomatis generate fitur tambahan (lag, cumulative, etc.) dengan asumsi kondisi stabil.')
+    st.info('Masukkan data meteorologi dasar. Sistem otomatis menghasilkan fitur tambahan (lag, cumulative, dsb.) dengan asumsi kondisi stabil.')
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown('#### 🌧️ Kondisi Meteorologi Saat Ini')
-        tp = st.number_input('💧 Total Precipitation (tp) [m]', min_value=0.0, max_value=0.1, value=0.001, step=0.0001, format="%.6f", help="Akumulasi hujan 3 jam terakhir")
-        ro = st.number_input('🌊 Runoff (ro) [m]', min_value=0.0, max_value=0.01, value=0.0001, step=0.00001, format="%.6f", help="Runoff permukaan")
-        t2m = st.number_input('🌡️ Temperature 2m (t2m) [K]', min_value=280.0, max_value=310.0, value=298.0, step=0.5, help="Suhu 2 meter dari permukaan")
-        swvl1 = st.number_input('💦 Soil Moisture (swvl1) [m³/m³]', min_value=0.0, max_value=0.5, value=0.35, step=0.01, help="Kelembapan tanah layer 1")
+        st.markdown('**Kondisi Meteorologi Saat Ini**')
+        tp = st.number_input('Total Precipitation (tp) [m]', min_value=0.0, max_value=0.1, value=0.001, step=0.0001, format="%.6f", help="Akumulasi hujan 3 jam terakhir")
+        ro = st.number_input('Runoff (ro) [m]', min_value=0.0, max_value=0.01, value=0.0001, step=0.00001, format="%.6f", help="Runoff permukaan")
+        t2m = st.number_input('Temperature 2m (t2m) [K]', min_value=280.0, max_value=310.0, value=298.0, step=0.5, help="Suhu 2 meter dari permukaan")
+        swvl1 = st.number_input('Soil Moisture (swvl1) [m³/m³]', min_value=0.0, max_value=0.5, value=0.35, step=0.01, help="Kelembapan tanah layer 1")
 
-        st.markdown('#### 💨 Kondisi Angin')
-        u10 = st.number_input('➡️ U-wind component (u10) [m/s]', min_value=-20.0, max_value=20.0, value=2.0, step=0.5, help="Komponen angin timur-barat")
-        v10 = st.number_input('⬆️ V-wind component (v10) [m/s]', min_value=-20.0, max_value=20.0, value=1.5, step=0.5, help="Komponen angin utara-selatan")
+        st.markdown('**Kondisi Angin**')
+        u10 = st.number_input('U-wind component (u10) [m/s]', min_value=-20.0, max_value=20.0, value=2.0, step=0.5, help="Komponen angin timur-barat")
+        v10 = st.number_input('V-wind component (v10) [m/s]', min_value=-20.0, max_value=20.0, value=1.5, step=0.5, help="Komponen angin utara-selatan")
         wind_speed = np.sqrt(u10**2 + v10**2)
-        st.metric('🌬️ Wind Speed Total', f'{wind_speed:.2f} m/s')
+        st.metric('Wind Speed Total', f'{wind_speed:.2f} m/s')
 
     with col2:
-        st.markdown('#### ⏰ Informasi Waktu')
+        st.markdown('**Informasi Waktu**')
         now = datetime.now()
 
-        selected_date = st.date_input('📅 Tanggal', value=now.date())
-        selected_hour = st.slider('🕐 Jam', 0, 23, now.hour)
+        selected_date = st.date_input('Tanggal', value=now.date())
+        selected_hour = st.slider('Jam', 0, 23, now.hour)
 
         # Calculate temporal features
         day_of_year = selected_date.timetuple().tm_yday
@@ -459,21 +475,21 @@ elif page == '🎯 Prediksi Manual':
         day_of_week_cos = np.cos(2 * np.pi * day_of_week / 7)
 
         st.info(f'''
-        **Temporal Info:**
+        **Informasi Temporal**
         - Hari ke-{day_of_year} dalam tahun
         - Bulan: {month} ({selected_date.strftime("%B")})
         - Hari: {selected_date.strftime("%A")}
         - Minggu ke-{week_of_year}
         ''')
 
-        st.markdown('#### ℹ️ Catatan')
+        st.markdown('**Catatan**')
         st.warning('''
         **Asumsi untuk prediksi:**
-        - Lag features: Diasumsikan kondisi serupa di masa lalu dengan penurunan bertahap
-        - Cumulative features: Dihitung berdasarkan kondisi saat ini
-        - Change features: Diasumsikan perubahan moderat
+        - Lag features: diasumsikan kondisi serupa di masa lalu dengan penurunan bertahap
+        - Cumulative features: dihitung berdasarkan kondisi saat ini
+        - Change features: diasumsikan perubahan moderat
 
-        ⚠️ Untuk prediksi akurat, sebaiknya gunakan data observasi historis lengkap.
+        Untuk prediksi akurat, gunakan data observasi historis lengkap.
         ''')
 
     # Prepare basic input
@@ -500,23 +516,23 @@ elif page == '🎯 Prediksi Manual':
     st.markdown('---')
 
     # Prediction button
-    if st.button('🚀 PREDIKSI SEKARANG', type='primary', use_container_width=True):
+    if st.button('Prediksi Sekarang', type='primary', use_container_width=True):
         with st.spinner('Generating features dan melakukan prediksi...'):
             try:
                 result = make_prediction(basic_input, models, preprocessed_folds, fold=3, threshold=optimal_threshold)
 
                 st.markdown('---')
-                st.subheader('📊 Hasil Prediksi')
+                st.subheader('Hasil Prediksi')
 
                 # Display probabilities
                 col1, col2, col3 = st.columns(3)
 
                 with col1:
-                    st.metric('🔷 XGBoost Probability', f'{result["xgb_proba"]:.4f}')
+                    st.metric('XGBoost Probability', f'{result["xgb_proba"]:.4f}')
                 with col2:
-                    st.metric('🔶 LSTM Probability', f'{result["lstm_proba"]:.4f}')
+                    st.metric('LSTM Probability', f'{result["lstm_proba"]:.4f}')
                 with col3:
-                    st.metric('⭐ Ensemble Probability', f'{result["ensemble_proba"]:.4f}')
+                    st.metric('Ensemble Probability', f'{result["ensemble_proba"]:.4f}')
 
                 # Final prediction
                 st.markdown('---')
@@ -525,15 +541,15 @@ elif page == '🎯 Prediksi Manual':
 
                 if is_extreme:
                     st.markdown(f'''
-                    <div class="warning-box">
-                        ⚠️ HUJAN EKSTREM DIPREDIKSI<br>
-                        Probabilitas: {result["ensemble_proba"]:.1%}<br>
-                        Status: WASPADA
+                    <div class="status-card alert">
+                        <div class="status-label">Status</div>
+                        <div class="status-value">Hujan Ekstrem Diprediksi — Waspada</div>
+                        <div class="status-detail">Probabilitas: {result["ensemble_proba"]:.1%}</div>
                     </div>
                     ''', unsafe_allow_html=True)
 
                     st.warning('''
-                    **⚠️ Rekomendasi:**
+                    **Rekomendasi:**
                     - Tetap waspada terhadap potensi banjir bandang
                     - Hindari aktivitas outdoor di area rawan
                     - Monitor update cuaca setiap jam
@@ -542,15 +558,15 @@ elif page == '🎯 Prediksi Manual':
                     ''')
                 else:
                     st.markdown(f'''
-                    <div class="safe-box">
-                        ✅ KONDISI AMAN<br>
-                        Probabilitas Ekstrem: {result["ensemble_proba"]:.1%}<br>
-                        Status: NORMAL
+                    <div class="status-card normal">
+                        <div class="status-label">Status</div>
+                        <div class="status-value">Kondisi Aman — Normal</div>
+                        <div class="status-detail">Probabilitas Ekstrem: {result["ensemble_proba"]:.1%}</div>
                     </div>
                     ''', unsafe_allow_html=True)
 
                     st.success('''
-                    **✅ Status:**
+                    **Status:**
                     - Tidak ada indikasi hujan ekstrem dalam 3 jam ke depan
                     - Aktivitas normal dapat dilanjutkan
                     - Tetap monitor kondisi cuaca secara berkala
@@ -559,42 +575,39 @@ elif page == '🎯 Prediksi Manual':
 
                 # Probability gauge
                 st.markdown('---')
-                st.markdown('#### 📈 Visualisasi Risk Level')
+                st.markdown('**Indikator Tingkat Risiko**')
 
-                fig, ax = plt.subplots(figsize=(12, 2))
+                fig, ax = plt.subplots(figsize=(12, 1.8))
 
-                # Draw gauge
-                colors = ['#44aa44', '#ffff44', '#ff9944', '#ff4444']
-                labels = ['AMAN', 'HATI-HATI', 'WASPADA', 'BAHAYA']
+                # Draw gauge as a single-hue gradient (calm, not a traffic-light rainbow)
+                band_colors = ['#dce8e2', '#b9cfc2', '#8fae9c', '#5f8a74']
+                labels = ['Aman', 'Hati-hati', 'Waspada', 'Bahaya']
                 bounds = [0, 0.25, 0.50, 0.75, 1.0]
 
-                for i in range(len(colors)):
+                for i in range(len(band_colors)):
                     ax.barh(0, bounds[i+1] - bounds[i], left=bounds[i],
-                           height=0.5, color=colors[i], alpha=0.7, edgecolor='black', linewidth=1)
-                    # Add label
+                           height=0.5, color=band_colors[i], edgecolor='white', linewidth=1.5)
                     mid = (bounds[i] + bounds[i+1]) / 2
                     ax.text(mid, 0, labels[i], ha='center', va='center',
-                           fontweight='bold', fontsize=11)
+                           fontsize=10, color='#2a2a28')
 
                 # Mark ensemble probability
                 ax.plot([result['ensemble_proba'], result['ensemble_proba']], [-0.4, 0.9],
-                       'b-', linewidth=4, label=f'Ensemble: {result["ensemble_proba"]:.3f}', zorder=10)
-                ax.scatter([result['ensemble_proba']], [0], s=200, c='blue', marker='v',
-                          edgecolors='black', linewidths=2, zorder=11)
+                       color='#1f4e5f', linewidth=3, label=f'Ensemble: {result["ensemble_proba"]:.3f}', zorder=10)
+                ax.scatter([result['ensemble_proba']], [0], s=140, c='#1f4e5f', marker='v',
+                          edgecolors='white', linewidths=1.5, zorder=11)
 
                 # Mark threshold
-                ax.axvline(x=threshold, color='red', linestyle='--', linewidth=2,
-                          label=f'Threshold: {threshold:.3f}', alpha=0.8)
+                ax.axvline(x=threshold, color='#b3441e', linestyle='--', linewidth=1.5,
+                          label=f'Threshold: {threshold:.3f}', alpha=0.9)
 
                 ax.set_xlim([0, 1])
                 ax.set_ylim([-0.6, 1.2])
-                ax.set_xlabel('Probability of Extreme Rainfall', fontsize=13, fontweight='bold')
+                ax.set_xlabel('Probabilitas Hujan Ekstrem', fontsize=11)
                 ax.set_yticks([])
-                ax.legend(loc='upper left', fontsize=11, framealpha=0.9)
-                ax.set_title('Risk Level Indicator', fontsize=14, fontweight='bold')
-                ax.spines['top'].set_visible(False)
-                ax.spines['right'].set_visible(False)
-                ax.spines['left'].set_visible(False)
+                ax.legend(loc='upper left', fontsize=9, frameon=False)
+                for spine in ['top', 'right', 'left']:
+                    ax.spines[spine].set_visible(False)
 
                 plt.tight_layout()
                 st.pyplot(fig)
@@ -607,26 +620,27 @@ elif page == '🎯 Prediksi Manual':
 # ============================================================================
 # PAGE 3: ANALISIS MODEL
 # ============================================================================
-elif page == '📈 Analisis Model':
+elif page == 'Analisis Model':
     st.markdown('---')
-    st.subheader('🔍 Analisis Performa Model')
+    st.subheader('Analisis Performa Model')
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown('#### Confusion Matrix (Fold 3)')
+        st.markdown('**Confusion Matrix (Fold 3)**')
         from sklearn.metrics import confusion_matrix, classification_report
 
         cm = confusion_matrix(predictions['Actual'], predictions['Ensemble'])
 
         fig, ax = plt.subplots(figsize=(6, 5))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='RdYlGn', cbar=False,
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False,
                    xticklabels=['Non-Ekstrem (0)', 'Ekstrem (1)'],
                    yticklabels=['Non-Ekstrem (0)', 'Ekstrem (1)'],
-                   ax=ax, annot_kws={'size': 16, 'weight': 'bold'})
-        ax.set_ylabel('Actual', fontsize=12)
-        ax.set_xlabel('Predicted', fontsize=12)
-        ax.set_title('Confusion Matrix', fontsize=13, fontweight='bold')
+                   ax=ax, annot_kws={'size': 15, 'weight': 'medium'},
+                   linewidths=0.5, linecolor='#e2e2df')
+        ax.set_ylabel('Actual', fontsize=11)
+        ax.set_xlabel('Predicted', fontsize=11)
+        ax.set_title('Confusion Matrix', fontsize=12, fontweight='medium')
         st.pyplot(fig)
 
         # Classification report
@@ -641,19 +655,21 @@ elif page == '📈 Analisis Model':
 
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.hist(predictions[predictions['Actual'] == 0]['Ensemble_Proba'],
-               bins=50, alpha=0.6, label='Actual Non-Ekstrem', color='green')
+               bins=50, alpha=0.7, label='Actual Non-Ekstrem', color='#7a9e8c')
         ax.hist(predictions[predictions['Actual'] == 1]['Ensemble_Proba'],
-               bins=50, alpha=0.6, label='Actual Ekstrem', color='red')
-        ax.axvline(x=optimal_threshold, color='blue', linestyle='--', linewidth=2,
+               bins=50, alpha=0.7, label='Actual Ekstrem', color='#b3441e')
+        ax.axvline(x=optimal_threshold, color='#1f4e5f', linestyle='--', linewidth=1.5,
                   label=f'Optimal Threshold ({optimal_threshold:.3f})')
         ax.set_xlabel('Probability', fontsize=11)
         ax.set_ylabel('Frequency', fontsize=11)
-        ax.set_title('Prediction Probability Distribution', fontsize=12, fontweight='bold')
-        ax.legend()
-        ax.grid(True, alpha=0.3)
+        ax.set_title('Prediction Probability Distribution', fontsize=12, fontweight='medium')
+        ax.legend(frameon=False)
+        ax.grid(True, alpha=0.2)
+        for spine in ['top', 'right']:
+            ax.spines[spine].set_visible(False)
         st.pyplot(fig)
 
-        st.markdown('#### Model Comparison')
+        st.markdown('**Model Comparison**')
 
         # Compare all models
         models_comparison = {
@@ -680,61 +696,65 @@ elif page == '📈 Analisis Model':
 # ============================================================================
 # PAGE 4: FEATURE IMPORTANCE
 # ============================================================================
-elif page == '📊 Feature Importance':
+elif page == 'Feature Importance':
     st.markdown('---')
-    st.subheader('🔍 Analisis Feature Importance')
+    st.subheader('Analisis Feature Importance')
 
     feature_importance = interpretation['feature_importance']
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown('#### Top Important Features')
+        st.markdown('**Top Important Features**')
 
         top_n = st.slider('Jumlah fitur', 5, 16, 10)
 
         fig, ax = plt.subplots(figsize=(8, 6))
         top_features = feature_importance.head(top_n)
         ax.barh(range(len(top_features)), top_features['Importance'].values,
-               color='steelblue', alpha=0.8)
+               color='#1f4e5f', alpha=0.85)
         ax.set_yticks(range(len(top_features)))
         ax.set_yticklabels(top_features['Feature'].values)
         ax.set_xlabel('Importance Score', fontsize=11)
-        ax.set_title(f'Top {top_n} Features (XGBoost)', fontsize=12, fontweight='bold')
+        ax.set_title(f'Top {top_n} Features (XGBoost)', fontsize=12, fontweight='medium')
         ax.invert_yaxis()
-        ax.grid(True, alpha=0.3, axis='x')
+        ax.grid(True, alpha=0.2, axis='x')
+        for spine in ['top', 'right']:
+            ax.spines[spine].set_visible(False)
         plt.tight_layout()
         st.pyplot(fig)
 
     with col2:
-        st.markdown('#### Feature Correlations')
+        st.markdown('**Feature Correlations**')
 
         correlations = interpretation['feature_correlations']
 
         fig, ax = plt.subplots(figsize=(8, 6))
         top_corr = pd.concat([correlations.head(8), correlations.tail(8)])
-        colors = ['green' if x > 0 else 'red' for x in top_corr.values]
-        ax.barh(range(len(top_corr)), top_corr.values, color=colors, alpha=0.7)
+        colors = ['#5f8a74' if x > 0 else '#b3441e' for x in top_corr.values]
+        ax.barh(range(len(top_corr)), top_corr.values, color=colors, alpha=0.85)
         ax.set_yticks(range(len(top_corr)))
         ax.set_yticklabels(top_corr.index)
         ax.set_xlabel('Correlation with Target', fontsize=11)
-        ax.set_title('Feature-Target Correlation', fontsize=12, fontweight='bold')
-        ax.axvline(x=0, color='black', linestyle='-', linewidth=0.8)
+        ax.set_title('Feature-Target Correlation', fontsize=12, fontweight='medium')
+        ax.axvline(x=0, color='#4a4a47', linestyle='-', linewidth=0.8)
         ax.invert_yaxis()
-        ax.grid(True, alpha=0.3, axis='x')
+        ax.grid(True, alpha=0.2, axis='x')
+        for spine in ['top', 'right']:
+            ax.spines[spine].set_visible(False)
         plt.tight_layout()
         st.pyplot(fig)
 
     st.markdown('---')
-    st.markdown('#### Feature Details Table')
+    st.markdown('**Feature Details Table**')
     st.dataframe(feature_importance, use_container_width=True)
 
 # ============================================================================
 # PAGE 5: DETAIL PREDIKSI
 # ============================================================================
-elif page == '📋 Detail Prediksi':
+elif page == 'Detail Prediksi':
     st.markdown('---')
-    st.subheader('📊 Detail Prediksi (Fold 3 - Test Set)')
+    st.subheader('Detail Prediksi (Fold 3 - Test Set)')
 
     # Filters
     col1, col2, col3 = st.columns(3)
@@ -775,7 +795,7 @@ elif page == '📋 Detail Prediksi':
     st.markdown('---')
     csv = predictions.to_csv(index=False)
     st.download_button(
-        '📥 Download All Predictions',
+        'Download All Predictions',
         data=csv,
         file_name=f'predictions_{datetime.now().strftime("%Y%m%d_%H%M")}.csv',
         mime='text/csv'
