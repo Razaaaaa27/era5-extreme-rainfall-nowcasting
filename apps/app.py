@@ -302,9 +302,11 @@ except Exception as e:
 
 # Sidebar navigation
 st.sidebar.markdown('### Navigasi')
+page_options = ['Dashboard', 'Prediksi Manual', 'Analisis Model', 'Feature Importance', 'Detail Prediksi']
 page = st.sidebar.radio(
     'Pilih halaman',
-    ['Dashboard', 'Prediksi Manual', 'Analisis Model', 'Feature Importance', 'Detail Prediksi'],
+    page_options,
+    index=page_options.index('Prediksi Manual'),
     label_visibility='collapsed'
 )
 
